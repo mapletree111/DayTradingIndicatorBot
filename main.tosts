@@ -57,7 +57,7 @@ def RSI = 50 * (ChgRatio + 1);
 plot Signal;
 # Buy/Sell Signal Calculations
 if (volumeWeightMACDColor == -1) then {
-    if (FullK <= 20) then {
+    if (FullK[1] < 20 && FullK >= 20) then {
         if (RSI <= 30) then {
             Signal = 2; # Super strong buy
         } else {
@@ -70,7 +70,7 @@ if (volumeWeightMACDColor == -1) then {
     }
     
 } else  {
-    if (FullK >= 80) then {
+    if (FullK[1] > 80 && FullK <= 80) then {
         if (RSI >= 70) then {
             Signal = -2; # Super strong sell
         } else {
