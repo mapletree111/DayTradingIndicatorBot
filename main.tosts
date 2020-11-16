@@ -19,14 +19,6 @@ if (Diff >= 0){
     volumeWeightMACDColor = -1;
 }
 
-# Diff.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
-# Diff.SetLineWeight(3);
-# Diff.DefineColor("Positive and Up", Color.GREEN);
-# Diff.DefineColor("Positive and Down", Color.DARK_GREEN);
-# Diff.DefineColor("Negative and Down", Color.RED);
-# Diff.DefineColor("Negative and Up", Color.DARK_RED);
-# Diff.AssignValueColor(if diff >= 0 then if diff > diff[1] then Diff.color("Positive and Up") else Diff.color("Positive and Down") else if diff < diff[1] then Diff.color("Negative and Down") else Diff.color("Negative and Up"));
-
 
 # Stochastic Full
 
@@ -59,36 +51,50 @@ def ChgRatio = if TotChgAvg != 0 then NetChgAvg / TotChgAvg else 0;
 def RSI = 50 * (ChgRatio + 1);
 
 
-plot signal;
+plot Signal;
 # Buy/Sell Signal Calculations
 if (volumeWeightMACDColor == -1) then {
     if (FullK <= 20) then {
         if (RSI <= 30) then {
-            signal = 2; # Super strong buy
+            Signal = 2; # Super strong buy
         } else {
-            signal = 1; # Strong buy
+            Signal = 1; # Strong buy
         }
     } else if (FullK <= 40) then {
-        signal = .5; # Weak buy
+        Signal = .5; # Weak buy
     } else {
-        signal = 0;
+        Signal = 0;
     }
     
 } else  {
     if (FullK >= 80) then {
         if (RSI >= 70) then {
-            signal = -2; # Super strong sell
+            Signal = -2; # Super strong sell
         } else {
-            signal = -1; # Strong sell
+            Signal = -1; # Strong sell
         }
     } else if (FullK >= 60) then {
-        signal = -.5; # Weak sell
+        Signal = -.5; # Weak sell
     } else {
-        signal = 0;
+        Signal = 0;
     }
     
 }
 
+Signal.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
+Signal.SetLineWeight(3);
+Signal.DefineColor("Super Strong Buy", Color.DARK_GREEN);
+Signal.DefineColor("Strong Buy", Color.GREEN);
+Signal.DefineColor("Weak Buy", Color.LIGHT_GREEN);
+
+Signal.DefineColor("Super Strong Sell", Color.DARK_RED);
+Signal.DefineColor("Strong Sell", Color.RED);
+Signal.DefineColor("Weak Sell", Color.LIGHT_RED);
+
+Signal.DefineColor("No Signal", Color.Gray);
+
+
+Signal.AssignValueColor(if signal > 0 then if signal == 2 then Signal.color("Super Strong Buy") else if signal == 1 then Signal.color("Strong Buy") else Signal.color("Weak Buy") else if signal < 0 then if signal == -2 then Signal.color("Super Strong Sell") else if signal == -1 then Signal.color("Strong Sell") else Signal.color("Weak Sell") else Signal.color("No Signal"));
 
 # Plots the zero line base of user choice of color
 plot ZeroLine = 0;
