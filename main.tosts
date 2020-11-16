@@ -4,18 +4,17 @@ declare lower;
 
 input fastLength = 12;
 input slowLength = 26;
-input MACDLength = 9;
 
 def fastAvg = sum(volume * close, fastLength) / sum(volume, fastLength);
 def slowAvg = sum(volume * close, slowLength) / sum(volume, slowLength);
 
 # Diff defines the bar color that we will be using as our first indicator (1/3)
 def Diff = Value - avg;
-def color;
+def volumeWeightMACDColor;
 if (Diff >= 0){
-    color = "GREEN";
+    volumeWeightMACDColor = "GREEN";
 } else {
-    color = "RED";
+    volumeWeightMACDColor = "RED";
 }
 
 # Diff.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
@@ -56,6 +55,29 @@ def ChgRatio = if TotChgAvg != 0 then NetChgAvg / TotChgAvg else 0;
 
 # RSI is the last indicator we will be looking at to trigger our signal (3/3)
 def RSI = 50 * (ChgRatio + 1);
+
+
+def signal;
+# Buy/Sell Signal Calculations
+if (volumeWeightMACDColor == "RED"){
+    if (FullK <= 20){
+        signal = 1; # Strong buy
+    } else {
+        signal = .5; # Weak buy
+    }
+    if (RSI <= 30){
+        signal = 2; # Super strong buy
+    }
+} else if (volumeWeightMACDColor == "GREEN") {
+    if (FullK >= 80){
+        signal = -1; # Strong sell
+    } else {
+        signal = -.5; # Weak sell
+    }
+    if (RSI >= 70){
+        signal = -2; # Super strong sell
+    }
+}
 
 
 # Plots the zero line base of user choice of color
