@@ -7,6 +7,32 @@ declare lower;
 input fastLength = 12;
 input slowLength = 26;
 input MACDLength = 9;
+
+
+################# S&P 500 Calculations #################
+input symbol = {default "/ES", "SPX"};
+def priceCSP = close(symbol);
+def volumeSP = volume(symbol);
+def fastAvgSP = sum(volumeSP * priceCSP, fastLength) / sum(volumeSP, fastLength);
+def slowAvgSP = sum(volumeSP * priceCSP, slowLength) / sum(volumeSP, slowLength);
+def valueSP = fastAvgSP - slowAvgSP;
+def avgSP = ExpAverage(valueSP, MACDLength);
+def diffSP = valueSP - avgSP;
+def volumeWeightMACColorSP;
+if (diffSP >= 0) then {
+    if (diffSP > diffSP[1]) then {
+        volumeWeightMACColorSP = 1; # Green
+    } else {
+        volumeWeightMACColorSP = .5; # Dark-Green
+    }
+} else if (diffSP < diffSP[1]) then {
+    volumeWeightMACColorSP = -1; # Red
+} else {
+    volumeWeightMACColorSP = -.5; # Dark-Red
+}
+
+################# CURRENT SECURITY CALCULATIONS #################
+
 input priceC = close;
 input length = 14;
 input averageTypeRSI = AverageType.WILDERS;
@@ -20,16 +46,22 @@ input slowing_period = 3;
 
 def fastAvg = sum(volume * priceC, fastLength) / sum(volume, fastLength);
 def slowAvg = sum(volume * priceC, slowLength) / sum(volume, slowLength);
-def Value = fastAvg - slowAvg;
-def Avg = ExpAverage(Value, MACDLength);
+def value = fastAvg - slowAvg;
+def avg = ExpAverage(value, MACDLength);
 
-# Diff defines the bar color that we will be using as our first indicator (1/3)
-def Diff = Value - avg;
+# diff defines the bar color that we will be using as our first indicator (1/3)
+def diff = value - avg;
 def volumeWeightMACDColor;
-if (Diff >= 0){
-    volumeWeightMACDColor = 1;
+if (diff >= 0) then {
+    if (diff > diff[1]) then {
+        volumeWeightMACDColor = 1; # Green
+    } else {
+        volumeWeightMACDColor = .5; # Dark-Green
+    }
+} else if (diff < diff[1]) then {
+    volumeWeightMACDColor = -1; # Red
 } else {
-    volumeWeightMACDColor = -1;
+    volumeWeightMACDColor = -.5; # Dark-Red
 }
 
 
@@ -55,7 +87,8 @@ def RSI = 50 * (ChgRatio + 1);
 
 plot Signal;
 # Buy/Sell Signal Calculations
-if (volumeWeightMACDColor == -1) then {
+### BUY ###
+if (volumeWeightMACDColor < 0 && volumeWeightMACColorSP < 0) then {
     if (FullK[1] < 20 && FullK >= 20) then {
         if (RSI <= 30) then {
             Signal = 2; # Super strong buy
@@ -67,8 +100,8 @@ if (volumeWeightMACDColor == -1) then {
     } else {
         Signal = 0;
     }
-    
-} else  {
+### SELL ###
+} else if (volumeWeightMACDColor > 0 && volumeWeightMACColorSP > 0){
     if (FullK[1] > 80 && FullK <= 80) then {
         if (RSI >= 70) then {
             Signal = -2; # Super strong sell
@@ -80,7 +113,8 @@ if (volumeWeightMACDColor == -1) then {
     } else {
         Signal = 0;
     }
-    
+} else {
+    Signal = 0;
 }
 
 Signal.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
