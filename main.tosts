@@ -18,10 +18,6 @@ if (Diff >= 0){
     color = "RED";
 }
 
-# Plots the zero line base of user choice of color
-plot ZeroLine = 0;
-ZeroLine.SetDefaultColor(GetColor(0));
-
 # Diff.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
 # Diff.SetLineWeight(3);
 # Diff.DefineColor("Positive and Up", Color.GREEN);
@@ -33,94 +29,35 @@ ZeroLine.SetDefaultColor(GetColor(0));
 
 # Stochastic Full
 
-input over_bought = 80;
-input over_sold = 20;
 input KPeriod = 10;
-input DPeriod = 10;
 input priceH = high;
 input priceL = low;
 input priceC = close;
 input slowing_period = 3;
-input averageType = AverageType.SIMPLE;
-input showBreakoutSignals = {default "No", "On FullK", "On FullD", "On FullK & FullD"};
+input averageStochasticFullType = AverageType.SIMPLE;
 
 def lowest_k = Lowest(priceL, KPeriod);
 def c1 = priceC - lowest_k;
 def c2 = Highest(priceH, KPeriod) - lowest_k;
 def FastK = if c2 != 0 then c1 / c2 * 100 else 0;
 
-# FullK is our first indicator (1/3)
-plot FullK = MovingAverage(averageType, FastK, slowing_period);
-plot FullD = MovingAverage(averageType, FullK, DPeriod);
-
-plot OverBought = over_bought;
-plot OverSold = over_sold;
-
-def upK = FullK crosses above OverSold;
-def upD = FullD crosses above OverSold;
-def downK = FullK crosses below OverBought;
-def downD = FullD crosses below OverBought;
-
-plot UpSignal;
-plot DownSignal;
-switch (showBreakoutSignals) {
-case "No":
-    UpSignal = Double.NaN;
-    DownSignal = Double.NaN;
-case "On FullK":
-    UpSignal = if upK then OverSold else Double.NaN;
-    DownSignal = if downK then OverBought else Double.NaN;
-case "On FullD":
-    UpSignal = if upD then OverSold else Double.NaN;
-    DownSignal = if downD then OverBought else Double.NaN;
-case "On FullK & FullD":
-    UpSignal = if upK or upD then OverSold else Double.NaN;
-    DownSignal = if downK or downD then OverBought else Double.NaN;
-}
-
-UpSignal.setHiding(showBreakoutSignals == showBreakoutSignals."No");
-DownSignal.setHiding(showBreakoutSignals == showBreakoutSignals."No");
-
-FullK.SetDefaultColor(GetColor(5));
-FullD.SetDefaultColor(GetColor(0));
-OverBought.SetDefaultColor(GetColor(1));
-OverSold.SetDefaultColor(GetColor(1));
-UpSignal.SetDefaultColor(Color.UPTICK);
-UpSignal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
-DownSignal.SetDefaultColor(Color.DOWNTICK);
-DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+# FullK is our second indicator (2/3)
+def FullK = MovingAverage(averageStochasticFullType, FastK, slowing_period);
 
 # Relative Strength Index
 
-
 input length = 14;
-input over_Bought = 70;
-input over_Sold = 30;
 input price = close;
 input averageType = AverageType.WILDERS;
-input showBreakoutSignals = no;
 
 def NetChgAvg = MovingAverage(averageType, price - price[1], length);
 def TotChgAvg = MovingAverage(averageType, AbsValue(price - price[1]), length);
 def ChgRatio = if TotChgAvg != 0 then NetChgAvg / TotChgAvg else 0;
 
-# RSI is the last indicator we will be looking at to trigger on signal
-plot RSI = 50 * (ChgRatio + 1);
-plot OverSold = over_Sold;
-plot OverBought = over_Bought;
-plot UpSignal = if RSI crosses above OverSold then OverSold else Double.NaN;
-plot DownSignal = if RSI crosses below OverBought then OverBought else Double.NaN;
+# RSI is the last indicator we will be looking at to trigger our signal (3/3)
+def RSI = 50 * (ChgRatio + 1);
 
-UpSignal.SetHiding(!showBreakoutSignals);
-DownSignal.SetHiding(!showBreakoutSignals);
 
-RSI.DefineColor("OverBought", GetColor(5));
-RSI.DefineColor("Normal", GetColor(7));
-RSI.DefineColor("OverSold", GetColor(1));
-RSI.AssignValueColor(if RSI > over_Bought then RSI.color("OverBought") else if RSI < over_Sold then RSI.color("OverSold") else RSI.color("Normal"));
-OverSold.SetDefaultColor(GetColor(8));
-OverBought.SetDefaultColor(GetColor(8));
-UpSignal.SetDefaultColor(Color.UPTICK);
-UpSignal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
-DownSignal.SetDefaultColor(Color.DOWNTICK);
-DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+# Plots the zero line base of user choice of color
+plot ZeroLine = 0;
+ZeroLine.SetDefaultColor(GetColor(0));
